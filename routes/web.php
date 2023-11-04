@@ -31,12 +31,15 @@ Route::get('/deploy', static function () {
 Route::group(['middleware' => ['web']], static function () {
     $secret = Config::get('app.secret_start');
     Route::get('/' . $secret, static function () use ($secret) {
+        if ('used' === session()->get('secret_start_key')) {
+            return redirect(\route('apply'), Response::HTTP_FOUND);
+        }
         session()->put('secret_start_key', $secret);
-        return redirect(\route('apply'), Response::HTTP_MOVED_PERMANENTLY);
+        return redirect(\route('apply'), Response::HTTP_FOUND);
     })->name('start');
     Route::get('/apply', static function () use ($secret) {
         if (session()->get('secret_start_key') !== $secret) {
-            return \response('Access denied', 401);
+            return \response('Access denied', Response::HTTP_UNAUTHORIZED);
         }
         session()->put('secret_start_key', 'used');
         return view('apply');
