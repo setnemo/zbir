@@ -55,12 +55,14 @@ Route::group(['middleware' => ['web']], static function () {
         $range = Config::get('app.spreadsheet_range');
         $response = $service->spreadsheets_values->get($spreadsheetId, $range);
         $values = $response->getValues();
-        $values[] = [$request->get('contact'),
+        $values[] = [
+            $request->get('contact'),
             date('Y-m-d H:i:s'),
             $request->server('HTTP_USER_AGENT'),
             $request->server('HTTP_SEC_CH_UA'),
-            $request->server('REMOTE_ADDR'),
-            ];
+            $request->server('HTTP_SEC_CH_UA_PLATFORM'),
+            $request->server('HTTP_X_FORWARDED_FOR'),
+        ];
         $service->spreadsheets_values->update(
             $spreadsheetId,
             $range,
