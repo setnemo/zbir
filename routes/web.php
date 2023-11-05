@@ -58,10 +58,10 @@ Route::group(['middleware' => ['web']], static function () {
         $values[] = [
             $request->get('contact'),
             date('Y-m-d H:i:s'),
-            $request->server('HTTP_USER_AGENT'),
-            $request->server('HTTP_SEC_CH_UA'),
-            $request->server('HTTP_SEC_CH_UA_PLATFORM'),
-            $request->server('HTTP_X_FORWARDED_FOR'),
+            $request->server('HTTP_USER_AGENT', 'empty'),
+            $request->server('HTTP_SEC_CH_UA', 'empty'),
+            $request->server('HTTP_SEC_CH_UA_PLATFORM', 'empty'),
+            $request->server('HTTP_X_FORWARDED_FOR', 'empty'),
         ];
         $service->spreadsheets_values->update(
             $spreadsheetId,
