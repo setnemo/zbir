@@ -32,16 +32,17 @@ Route::group(['middleware' => ['web']], static function () {
     $secret = Config::get('app.secret_start');
     Route::get('/' . $secret, static function () use ($secret) {
         if ('used' === session()->get('secret_start_key')) {
-            return redirect(\route('apply'), Response::HTTP_FOUND);
+            return Redirect::to(\route('apply'))
+                ->header('Cache-Control', 'no-store, no-cache, must-revalidate');
         }
         session()->put('secret_start_key', $secret);
-        return redirect(\route('apply'), Response::HTTP_FOUND);
+        return redirect(\route('apply'), Response::HTTP_FOUND)
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate');
     })->name('start');
     Route::get('/apply', static function () use ($secret) {
         if (session()->get('secret_start_key') !== $secret) {
             return \response('Access denied', Response::HTTP_UNAUTHORIZED);
         }
-        session()->put('secret_start_key', 'used');
         return view('apply');
     })->name('apply');
     Route::post('/save', static function (Request $request) use ($secret) {
@@ -54,12 +55,18 @@ Route::group(['middleware' => ['web']], static function () {
         $range = Config::get('app.spreadsheet_range');
         $response = $service->spreadsheets_values->get($spreadsheetId, $range);
         $values = $response->getValues();
-        $values[] = [$request->get('contact')];
+        $values[] = [$request->get('contact'),
+            date('Y-m-d H:i:s'),
+            $request->server('HTTP_USER_AGENT'),
+            $request->server('HTTP_SEC_CH_UA'),
+            $request->server('REMOTE_ADDR'),
+            ];
         $service->spreadsheets_values->update(
             $spreadsheetId,
             $range,
             new Google_Service_Sheets_ValueRange(['values' => $values,]), ['valueInputOption' => 'RAW',]
         );
+        session()->put('secret_start_key', 'used');
         session()->regenerate();
 
         return \response(['number' => count($values)], Response::HTTP_ACCEPTED);
