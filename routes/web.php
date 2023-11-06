@@ -72,5 +72,5 @@ Route::group(['middleware' => ['web']], static function () {
         session()->regenerate();
 
         return \response(['number' => count($values)], Response::HTTP_ACCEPTED);
-    })->name('start');
+    })->name('save');
 });
